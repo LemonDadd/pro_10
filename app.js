@@ -535,9 +535,8 @@ function fallbackAutoprefixer(css) {
   for (const [property, prefixes] of Object.entries(prefixMap)) {
     const regex = new RegExp(`\\b${property.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*([^;]+)`, 'gi');
     
-    result = result.replace(regex, (match, value) => {
+    result = result.replace(regex, (_match, value) => {
       const lines = [];
-      const propName = property.replace(':', '');
       
       for (const prefix of prefixes) {
         if (prefix.includes(':')) {
@@ -1278,18 +1277,13 @@ function checkLibAvailability() {
   const libs = {
     CodeMirror: { name: 'CodeMirror', required: true, global: 'CodeMirror' },
     prettier: { name: 'Prettier', required: true, global: 'prettier' },
-    htmlMinifier: { name: 'HTML 压缩', required: false, global: 'minify' },
     terser: { name: 'JS 压缩', required: false, global: 'Terser' },
-    cleanCSS: { name: 'CSS 压缩', required: false, global: 'CleanCSS' },
-    babel: { name: 'Babel 转译', required: false, global: 'Babel' },
-    postcss: { name: 'PostCSS', required: false, global: 'postcss' },
-    autoprefixer: { name: 'Autoprefixer', required: false, global: 'autoprefixer' }
+    babel: { name: 'Babel 转译', required: false, global: 'Babel' }
   };
 
   const missing = [];
-  const available = [];
 
-  for (const [key, lib] of Object.entries(libs)) {
+  for (const lib of Object.values(libs)) {
     const parts = lib.global.split('.');
     let val = window;
     let found = true;
@@ -1300,18 +1294,16 @@ function checkLibAvailability() {
       }
       val = val[part];
     }
-    if (found) {
-      available.push(lib.name);
-    } else {
+    if (!found) {
       missing.push(lib.name);
     }
   }
 
-  return { missing, available, isOnline: navigator.onLine };
+  return { missing, isOnline: navigator.onLine };
 }
 
 function updateOfflineStatus() {
-  const { missing, available, isOnline } = checkLibAvailability();
+  const { missing, isOnline } = checkLibAvailability();
   
   if (!isOnline && missing.length > 0) {
     showStatus(`📴 离线模式 / ${missing.length} 项功能不可用：${missing.join('、')}`, 'error', true);

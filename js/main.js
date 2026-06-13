@@ -6,12 +6,19 @@ import { bindEvents } from './bindEvents.js';
 import { loadStateFromHash } from './hashState.js';
 import { initOnlineStatus, updateOfflineStatus } from './onlineStatus.js';
 import { showStatus } from './ui.js';
+import { getMissingRequired } from './libRegistry.js';
 
 async function main() {
   try {
     showStatus('正在加载脚本...', '');
 
-    await loadAllScripts();
+    const results = await loadAllScripts();
+
+    const missingRequired = getMissingRequired();
+    if (missingRequired.length > 0) {
+      updateOfflineStatus();
+      return;
+    }
 
     initTheme();
     initPrettierPlugins();
@@ -21,16 +28,9 @@ async function main() {
     loadStateFromHash();
     initOnlineStatus();
 
-    setTimeout(() => {
-      updateOfflineStatus();
-    }, 100);
+    updateOfflineStatus();
 
-    setTimeout(() => {
-      const cm = window.CodeMirror;
-      if (!cm) {
-        showStatus('❌ CodeMirror 加载失败，检查 vendor 目录或网络', 'error', true);
-      }
-    }, 500);
+    showStatus('就绪', 'success');
 
   } catch (error) {
     console.error('初始化失败:', error);

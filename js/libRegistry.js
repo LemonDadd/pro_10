@@ -86,6 +86,26 @@ export function getMissingRequired() {
   return result;
 }
 
+export function getMissingOptional() {
+  const result = [];
+  for (const [name, entry] of Registry) {
+    if (!entry.required && entry.status === 'failed') {
+      result.push(name);
+    }
+  }
+  return result;
+}
+
+export function getFailedScripts() {
+  const result = [];
+  for (const [name, entry] of Registry) {
+    if (entry.status === 'failed') {
+      result.push(name);
+    }
+  }
+  return result;
+}
+
 export function onAllRequiredLoaded(callback) {
   if (allRequiredLoaded()) {
     callback();

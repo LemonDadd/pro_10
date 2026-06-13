@@ -2,8 +2,7 @@ import { scriptManifest } from './scriptManifest.js';
 import {
   initRegistry,
   setScriptLoaded,
-  setScriptFailed,
-  onAllRequiredLoaded
+  setScriptFailed
 } from './libRegistry.js';
 
 function loadOneScript(entry) {
@@ -111,30 +110,5 @@ export async function loadAllScripts() {
     results.push(...groupResults);
   }
 
-  const allLoaded = results.every(r => r.success);
-  const requiredLoaded = allRequiredLoaded();
-  if (!requiredLoaded) {
-    for (const entry of ordered) {
-      if (entry.required && !isScriptLoaded(entry.name)) {
-        const global = entry.global;
-        const parts = global.split('.');
-        let val = window;
-        let found = true;
-        for (const part of parts) {
-          if (val == null || val[part] == null) { found = false; break; }
-          val = val[part];
-        }
-        if (found) {
-          setScriptLoaded(entry.name);
-        }
-      }
-    }
-  }
-
-  return new Promise((resolve) => {
-    onAllRequiredLoaded(() => resolve(results));
-    setTimeout(() => resolve(results), 2000);
-  });
+  return results;
 }
-
-import { allRequiredLoaded, isScriptLoaded } from './libRegistry.js';

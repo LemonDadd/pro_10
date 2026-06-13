@@ -1,50 +1,36 @@
 import { showStatus } from './ui.js';
-import { scriptManifest } from './scriptManifest.js';
+import { getMissingRequired, getMissingOptional } from './libRegistry.js';
 
-function checkLibAvailability() {
-  const libs = {
-    CodeMirror: { name: 'CodeMirror', required: true, global: 'CodeMirror' },
-    prettier: { name: 'Prettier', required: true, global: 'prettier' },
-    terser: { name: 'JS 压缩', required: false, global: 'Terser' },
-    babel: { name: 'Babel 转译', required: false, global: 'Babel' }
-  };
+const friendlyNames = {
+  'CodeMirror': 'CodeMirror',
+  'Prettier': 'Prettier',
+  'Terser': 'JS 压缩',
+  'Babel Standalone': 'Babel 转译'
+};
 
-  const missing = [];
-
-  for (const lib of Object.values(libs)) {
-    const parts = lib.global.split('.');
-    let val = window;
-    let found = true;
-    for (const part of parts) {
-      if (val == null || val[part] == null) {
-        found = false;
-        break;
-      }
-      val = val[part];
-    }
-    if (!found) {
-      missing.push(lib.name);
-    }
-  }
-
-  return { missing, isOnline: navigator.onLine };
+function friendlyName(key) {
+  return friendlyNames[key] || key;
 }
 
 export function updateOfflineStatus() {
-  const { missing, isOnline } = checkLibAvailability();
+  const missingRequired = getMissingRequired();
+  const missingOptional = getMissingOptional();
+  const isOnline = navigator.onLine;
+  const allMissing = [...missingRequired, ...missingOptional];
+  const names = allMissing.map(friendlyName);
 
-  if (!isOnline && missing.length > 0) {
-    showStatus(`📴 离线模式 / ${missing.length} 项功能不可用：${missing.join('、')}`, 'error', true);
+  if (missingRequired.length > 0) {
+    showStatus(`❌ 核心库未加载：${names.join('、')}，请检查 vendor 目录或网络`, 'error', true);
+  } else if (!isOnline && missingOptional.length > 0) {
+    showStatus(`📴 离线模式 / ${missingOptional.length} 项可选功能不可用：${names.join('、')}`, 'warning', true);
   } else if (!isOnline) {
     showStatus('📴 离线模式 / 核心功能可用', 'warning', true);
-  } else if (missing.length > 0) {
-    showStatus(`⚠️ 部分功能不可用：${missing.join('、')}`, 'warning', true);
+  } else if (missingOptional.length > 0) {
+    showStatus(`⚠️ 部分可选功能不可用：${names.join('、')}`, 'warning', true);
   }
 }
 
 export function initOnlineStatus() {
-  updateOfflineStatus();
-
   window.addEventListener('online', updateOfflineStatus);
   window.addEventListener('offline', updateOfflineStatus);
 }

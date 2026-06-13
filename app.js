@@ -1079,12 +1079,12 @@ function updateOptionsUI() {
   }
 }
 
-function showStatus(message, type = '') {
+function showStatus(message, type = '', persistent = false) {
   const statusEl = document.getElementById('statusMessage');
   statusEl.textContent = message;
   statusEl.className = 'status-message ' + type;
   
-  if (type) {
+  if (type && !persistent) {
     setTimeout(() => {
       statusEl.className = 'status-message';
       statusEl.textContent = '就绪';
@@ -1274,12 +1274,67 @@ function bindEvents() {
   window.addEventListener('hashchange', loadStateFromHash);
 }
 
+function checkLibAvailability() {
+  const libs = {
+    CodeMirror: { name: 'CodeMirror', required: true, global: 'CodeMirror' },
+    prettier: { name: 'Prettier', required: true, global: 'prettier' },
+    htmlMinifier: { name: 'HTML 压缩', required: false, global: 'minify' },
+    terser: { name: 'JS 压缩', required: false, global: 'Terser' },
+    cleanCSS: { name: 'CSS 压缩', required: false, global: 'CleanCSS' },
+    babel: { name: 'Babel 转译', required: false, global: 'Babel' },
+    postcss: { name: 'PostCSS', required: false, global: 'postcss' },
+    autoprefixer: { name: 'Autoprefixer', required: false, global: 'autoprefixer' }
+  };
+
+  const missing = [];
+  const available = [];
+
+  for (const [key, lib] of Object.entries(libs)) {
+    const parts = lib.global.split('.');
+    let val = window;
+    let found = true;
+    for (const part of parts) {
+      if (val == null || val[part] == null) {
+        found = false;
+        break;
+      }
+      val = val[part];
+    }
+    if (found) {
+      available.push(lib.name);
+    } else {
+      missing.push(lib.name);
+    }
+  }
+
+  return { missing, available, isOnline: navigator.onLine };
+}
+
+function updateOfflineStatus() {
+  const { missing, available, isOnline } = checkLibAvailability();
+  
+  if (!isOnline && missing.length > 0) {
+    showStatus(`📴 离线模式 / ${missing.length} 项功能不可用：${missing.join('、')}`, 'error', true);
+  } else if (!isOnline) {
+    showStatus('📴 离线模式 / 核心功能可用', 'warning', true);
+  } else if (missing.length > 0) {
+    showStatus(`⚠️ 部分功能不可用：${missing.join('、')}`, 'warning', true);
+  }
+}
+
+function initOnlineStatus() {
+  window.addEventListener('online', updateOfflineStatus);
+  window.addEventListener('offline', updateOfflineStatus);
+  setTimeout(updateOfflineStatus, 500);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initPrettierPlugins();
   initEditors();
   bindEvents();
   loadStateFromHash();
+  initOnlineStatus();
   
   if (editors.autoInput) {
     editors.autoInput.setValue(`.example {

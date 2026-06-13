@@ -714,6 +714,11 @@ body {
   font-weight: 500;
 }
 
+.status-message.warning {
+  color: var(--warning);
+  font-weight: 500;
+}
+
 .status-right {
   display: flex;
   gap: 20px;

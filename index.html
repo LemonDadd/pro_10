@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeBeautify Pro - 代码格式化工具</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/eclipse.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/dracula.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-light">
+<div class="app-container">
+  <header class="app-header">
+    <div class="header-left">
+      <span class="logo">✨</span>
+      <h1>CodeBeautify Pro</h1>
+    </div>
+    <div class="header-right">
+      <button id="themeToggle" class="btn-icon" title="切换主题">🌓</button>
+    </div>
+  </header>
+
+  <nav class="view-tabs">
+    <button class="view-tab active" data-view="editor">📝 编辑器</button>
+    <button class="view-tab" data-view="autoprefixer">🎨 Autoprefixer</button>
+    <button class="view-tab" data-view="utils">🛠️ 实用工具</button>
+  </nav>
+
+  <main class="main-content">
+    <section id="view-editor" class="view active">
+      <div class="editor-layout">
+        <aside class="control-panel">
+          <div class="panel-section">
+            <h3>⚡ 操作</h3>
+            <div class="action-buttons">
+              <button id="formatBtn" class="btn btn-primary">🎯 格式化</button>
+              <button id="minifyBtn" class="btn btn-secondary">📦 压缩</button>
+              <button id="swapBtn" class="btn">🔄 交换</button>
+              <button id="clearBtn" class="btn btn-danger">🗑️ 清空</button>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h3>⚙️ Prettier 选项</h3>
+            <div class="option-group">
+              <label>Tab 宽度
+                <input type="number" id="tabWidth" value="2" min="1" max="8">
+              </label>
+              <label>打印宽度
+                <input type="number" id="printWidth" value="80" min="40" max="200">
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="singleQuote" checked>
+                <span>单引号</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="semi" checked>
+                <span>分号</span>
+              </label>
+              <label>尾随逗号
+                <select id="trailingComma">
+                  <option value="es5">es5</option>
+                  <option value="none">none</option>
+                  <option value="all">all</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h3>👁️ 显示选项</h3>
+            <div class="option-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="syncScroll" checked>
+                <span>同步滚动</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="lineNumbers" checked>
+                <span>行号</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="lineWrapping">
+                <span>自动换行</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h3>📊 统计</h3>
+            <div class="stats">
+              <div><span>输入:</span> <span id="inputStats">0 字符</span></div>
+              <div><span>输出:</span> <span id="outputStats">0 字符</span></div>
+              <div id="compressionRow" class="compression-rate hidden">
+                <span>压缩率:</span> <span id="compressionRate">0%</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="editors-container">
+          <div class="lang-tabs">
+            <button class="lang-tab active" data-lang="html">HTML</button>
+            <button class="lang-tab" data-lang="css">CSS</button>
+            <button class="lang-tab" data-lang="scss">SCSS</button>
+            <button class="lang-tab" data-lang="javascript">JS</button>
+            <button class="lang-tab" data-lang="typescript">TS</button>
+            <button class="lang-tab" data-lang="json">JSON</button>
+            <button class="lang-tab" data-lang="xml">XML</button>
+            <button class="lang-tab" data-lang="sql">SQL</button>
+            <button class="lang-tab" data-lang="markdown">MD</button>
+          </div>
+          <div class="editors-wrapper">
+            <div class="editor-pane">
+              <div class="editor-header">
+                <span>📥 输入</span>
+                <button class="btn-small" id="detectLangBtn">🔍 检测语言</button>
+              </div>
+              <textarea id="inputEditor"></textarea>
+            </div>
+            <div class="editor-pane">
+              <div class="editor-header">
+                <span>📤 输出</span>
+                <div class="editor-actions">
+                  <button class="btn-small" id="copyBtn">📋 复制</button>
+                  <button class="btn-small" id="downloadBtn">💾 下载</button>
+                </div>
+              </div>
+              <textarea id="outputEditor"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-autoprefixer" class="view">
+      <div class="autoprefixer-layout">
+        <div class="autoprefixer-config">
+          <label>🌐 Browserslist 查询
+            <input type="text" id="browserslist" value="> 1%, last 2 versions, not dead">
+          </label>
+          <button id="runAutoprefixerBtn" class="btn btn-primary">▶️ 运行 Autoprefixer</button>
+        </div>
+        <div class="editors-wrapper">
+          <div class="editor-pane">
+            <div class="editor-header">
+              <span>📥 CSS 输入</span>
+            </div>
+            <textarea id="autoInputEditor"></textarea>
+          </div>
+          <div class="editor-pane">
+            <div class="editor-header">
+              <span>📤 输出 (Diff)</span>
+              <span id="prefixStats" class="diff-stats"></span>
+            </div>
+            <div id="diffOutput" class="diff-output"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-utils" class="view">
+      <div class="utils-grid">
+        <div class="util-card">
+          <h3>🎨 CSS 颜色转换</h3>
+          <div class="util-inputs">
+            <input type="text" id="colorInput" placeholder="输入颜色: #ff0000 或 rgba(255,0,0,1)">
+            <button id="convertColorBtn" class="btn btn-primary">转换</button>
+          </div>
+          <div class="util-results" id="colorResults"></div>
+        </div>
+
+        <div class="util-card">
+          <h3>📏 px ↔ rem 转换</h3>
+          <div class="util-inputs">
+            <input type="text" id="pxremInput" placeholder="输入值: 16px 或 1rem">
+            <label class="inline-label">根字号:
+              <input type="number" id="rootFontSize" value="16" min="10" max="32"> px
+            </label>
+            <button id="convertPxRemBtn" class="btn btn-primary">转换</button>
+          </div>
+          <div class="util-results" id="pxremResults"></div>
+        </div>
+
+        <div class="util-card">
+          <h3>🔤 HTML 实体转义</h3>
+          <div class="util-inputs">
+            <textarea id="htmlEscapeInput" placeholder="输入 HTML 内容..." rows="3"></textarea>
+            <div class="util-buttons">
+              <button id="escapeHtmlBtn" class="btn">转义</button>
+              <button id="unescapeHtmlBtn" class="btn">反转义</button>
+            </div>
+          </div>
+          <div class="util-results" id="htmlEscapeResults"></div>
+        </div>
+
+        <div class="util-card">
+          <h3>🔄 Babel 转 ES5</h3>
+          <div class="util-inputs">
+            <textarea id="babelInput" placeholder="输入 ES6+ 代码..." rows="3"></textarea>
+            <button id="runBabelBtn" class="btn btn-primary">转译</button>
+          </div>
+          <div class="util-results" id="babelResults"></div>
+        </div>
+
+        <div class="util-card">
+          <h3>📋 JSON 工具</h3>
+          <div class="util-inputs">
+            <textarea id="jsonToolInput" placeholder="输入 JSON..." rows="3"></textarea>
+            <div class="util-buttons">
+              <button id="validateJsonBtn" class="btn">校验</button>
+              <button id="sortJsonBtn" class="btn">排序键</button>
+              <button id="flattenJsonBtn" class="btn">扁平化</button>
+            </div>
+          </div>
+          <div class="util-results" id="jsonToolResults"></div>
+        </div>
+
+        <div class="util-card">
+          <h3>🔐 Base64 编解码</h3>
+          <div class="util-inputs">
+            <textarea id="base64Input" placeholder="输入文本..." rows="3"></textarea>
+            <div class="util-buttons">
+              <button id="encodeBase64Btn" class="btn">编码</button>
+              <button id="decodeBase64Btn" class="btn">解码</button>
+            </div>
+          </div>
+          <div class="util-results" id="base64Results"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="status-bar">
+    <div id="statusMessage" class="status-message">就绪</div>
+    <div class="status-right">
+      <span id="cursorPosition">行 1, 列 1</span>
+      <span id="langIndicator">HTML</span>
+    </div>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/xml/xml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/css/css.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/htmlmixed/htmlmixed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/sql/sql.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/markdown/markdown.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/brace-fold.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/xml-fold.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/comment-fold.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/selection/active-line.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/prettier@2.8.8/standalone.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prettier@2.8.8/parser-html.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prettier@2.8.8/parser-babel.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prettier@2.8.8/parser-typescript.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prettier@2.8.8/parser-postcss.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prettier@2.8.8/parser-markdown.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prettier@2.8.8/parser-yaml.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/html-minifier-terser@6.1.0/dist/htmlminifier.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/terser@5.19.2/dist/bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clean-css@5.3.2/browser.js"></script>
+
+<script src="https://unpkg.com/postcss@8.4.31/dist/postcss.js"></script>
+<script src="https://unpkg.com/autoprefixer@10.4.16/lib/autoprefixer.js"></script>
+<script src="https://unpkg.com/browserslist@4.22.1/browserslist.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"></script>
+
+<script src="app.js"></script>
+</body>
+</html>
